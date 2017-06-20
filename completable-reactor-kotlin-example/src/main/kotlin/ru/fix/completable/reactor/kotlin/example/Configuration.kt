@@ -7,14 +7,26 @@ import ru.fix.completable.reactor.runtime.ReactorGraphBuilder
  * @author Kamil Asfandiyarov
  */
 class Configuration {
+    val builder = ReactorGraphBuilder()
+    val storageFacility = StorageFacility()
 
-    fun purchase() : ReactorGraph<String> {
+    fun purchase() : ReactorGraph<PurchasePayload> {
 
-        val graphBuilder = ReactorGraphBuilder()
+        val storage = builder.processor()
+                .forPayload(PurchasePayload::class.java)
+                .passArg { pld -> pld.productId }
+                .withHandler { product -> storageFacility.reserveProduct(product) }
+                .withoutMerger()
+                .buildProcessor()
 
-        graphBuilder.payload(PurchasePayload.javaClass)
 
+        return builder.payload(PurchasePayload::class.java)
+                .handle(storage)
 
+                .mergePoint(storage)
+                .onAny().complete()
 
+                .coordinates()
+                .buildGraph();
     }
 }

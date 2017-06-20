@@ -3,6 +3,9 @@ package ru.fix.completable.reactor.kotlin.example
 /**
  * @author Kamil Asfandiyarov
  */
-class PurchasePayload {
-    val foo: Boolean = false
-}
+data class PurchasePayload (
+        val userId: Long,
+        val productId: Long,
+        val result: Boolean
+
+)
