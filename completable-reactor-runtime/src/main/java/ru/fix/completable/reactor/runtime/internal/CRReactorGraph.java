@@ -25,16 +25,6 @@ public class CRReactorGraph<PayloadType> implements ReactorGraph<PayloadType> {
 
     @Data
     @Accessors(chain = true)
-    public static class MergeGroup {
-        final List<MergePoint> mergePoints = new ArrayList<>();
-
-        public MergeGroup(MergePoint... mergePoints) {
-            this.mergePoints.addAll(Arrays.asList(mergePoints));
-        }
-    }
-
-    @Data
-    @Accessors(chain = true)
     public static class MergePoint {
         public enum Type {
             /**
@@ -183,6 +173,18 @@ public class CRReactorGraph<PayloadType> implements ReactorGraph<PayloadType> {
             return model;
         }
 
+        public String getDebugDescription(){
+            if(isOnAny){
+                return "{onAny}";
+            } else if(mergeStatuses != null) {
+                return mergeStatuses.stream()
+                        .map(status -> status.getDeclaringClass() + "." + status)
+                        .collect(Collectors.joining(",", "{", "}"));
+            } else {
+                return "{INVALID}";
+            }
+        }
+
     }
 
     public enum ProcessingItemType {
@@ -244,6 +246,7 @@ public class CRReactorGraph<PayloadType> implements ReactorGraph<PayloadType> {
             model.buildSource = subgraphDescription.getBuildSource();
             model.subgraphDoc = subgraphDescription.getSubgraphDoc();
             model.subgraphTitle = subgraphDescription.getSubgraphTitle();
+            model.payloadClass = subgraphDescription.getSubgraphPayload().getName();
 
             return model;
         }
@@ -297,12 +300,6 @@ public class CRReactorGraph<PayloadType> implements ReactorGraph<PayloadType> {
 
     @Getter
     final Map<CRProcessingItem, ProcessingItemInfo> processingItems = new HashMap<>();
-
-    @Getter
-    final List<MergeGroup> mergeGroups = new ArrayList<>();
-
-    @Getter
-    Optional<MergeGroup> startPointMergeGroup;
 
     @Getter
     final List<MergePoint> mergePoints = new ArrayList<>();
@@ -374,21 +371,6 @@ public class CRReactorGraph<PayloadType> implements ReactorGraph<PayloadType> {
         this.mergePoints.stream()
                 .map(MergePoint::serialize)
                 .forEach(model.mergePoints::add);
-
-        /**
-         * Serialize implicit MergeGroup information
-         */
-        this.mergeGroups.forEach(mergeGroup -> {
-            val modelGroup = new ReactorGraphModel.MergeGroup();
-            mergeGroup.getMergePoints().stream()
-                    .map(MergePoint::asProcessingItem)
-                    .map(CRProcessingItem::getIdentity)
-                    .forEach(modelGroup.getMergePoints()::add);
-            if(this.getStartPointMergeGroup().isPresent() && this.getStartPointMergeGroup().get() == mergeGroup) {
-                modelGroup.setIncludesStartPoint(true);
-            }
-            model.getImplicitMergeGroups().add(modelGroup);
-        });
 
         return model;
     }

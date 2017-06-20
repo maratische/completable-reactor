@@ -37,6 +37,13 @@ public class GraphViewer {
             }
 
             @Override
+            public void goToSubgraph(String subgraphPayloadClass) {
+                for(val listener: actionListeners){
+                    listener.goToSubgraph(subgraphPayloadClass);
+                }
+            }
+
+            @Override
             public void coordinatesChanged(List<CoordinateItem> coordinateItems) {
                 for (val listener : actionListeners) {
                     listener.coordinatesChanged(coordinateItems);
@@ -46,7 +53,7 @@ public class GraphViewer {
 
         graphViewPane = new GraphViewPane(actionListener, this::getShortcut);
 
-        graphViewPane.setPrefSize(500.0, 500.0);
+        graphViewPane.setPrefSize(700.0, 600.0);
 
         scene = new Scene(graphViewPane);
 
@@ -59,9 +66,6 @@ public class GraphViewer {
                     switch (shortcutType){
                         case GOTO_SERIALIZATION_POINT:
                             actionListener.goToSource(graphViewPane.getGraph().serializationPointSource);
-                            break;
-                        case SHOW_HIDE_MERGE_GROUPS:
-                            showMergeGroups(!isMergeGroupsShown());
                             break;
                         default:
                             throw new IllegalStateException();
@@ -121,20 +125,25 @@ public class GraphViewer {
 
     public interface ActionListener {
 
+        /**
+         * Viewer asks IDE to navigate to source code
+         * @param source source code location
+         */
         void goToSource(ReactorGraphModel.Source source);
 
+        /**
+         * Viewer asks IDE to navigate to subgraph view
+         */
+        void goToSubgraph(String subgraphPayloadClass);
+
+        /**
+         * Graph nodes coordinates changed
+         * @param coordinateItems new coordinates
+         */
         void coordinatesChanged(List<CoordinateItem> coordinateItems);
     }
 
     public Scene getScene() {
         return scene;
-    }
-
-    public void showMergeGroups(boolean showMergeGroups){
-        graphViewPane.showMergeGroups(showMergeGroups);
-    }
-
-    public boolean isMergeGroupsShown(){
-        return graphViewPane.isMergeGroupShown();
     }
 }
