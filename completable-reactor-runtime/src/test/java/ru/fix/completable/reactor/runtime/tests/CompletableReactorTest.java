@@ -938,12 +938,12 @@ public class CompletableReactorTest {
         Semaphore mergePoint2Semaphore = new Semaphore(0);
 
         class Config {
-            final ReactorGraphBuilder builder = new ReactorGraphBuilder(this);
+            final ReactorGraphBuilder<StartPointMergeGroupPayload> builder =
+                    new ReactorGraphBuilder(StartPointMergeGroupPayload.class, this);
             Processor<IdListPayload> idProcessor0 = buildProcessor(builder, new IdProcessor(0));
             Processor<IdListPayload> idProcessor1 = buildProcessor(builder, new IdProcessor(1));
 
             MergePoint<StartPointMergeGroupPayload> mergePoint2 = builder.mergePoint()
-                    .forPayload(CompletableReactorTest.StartPointMergeGroupPayload.class)
                     .withMerger(
                             "mergePoint-2",
                             pld -> {

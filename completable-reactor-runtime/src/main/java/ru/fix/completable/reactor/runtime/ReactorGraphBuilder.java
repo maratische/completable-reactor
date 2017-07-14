@@ -7,15 +7,12 @@ import ru.fix.completable.reactor.runtime.dsl.*;
 import ru.fix.completable.reactor.runtime.internal.CRReactorGraph;
 import ru.fix.completable.reactor.runtime.internal.ReactorReflector;
 import ru.fix.completable.reactor.runtime.internal.dsl.*;
-import ru.fix.completable.reactor.runtime.validators.GraphValidator;
 import ru.fix.completable.reactor.runtime.validators.ProcessorsHaveIncomingFlowsValidator;
 import ru.fix.completable.reactor.runtime.validators.TerminalVertexExistValidator;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,83 +21,61 @@ import java.util.Optional;
  * @author Kamil Asfandiyarov
  */
 @Slf4j
-public class ReactorGraphBuilder {
+public class ReactorGraphBuilder<PayloadType> {
 
-    final List<GraphValidator> graphValidators = new ArrayList<>();
-    final Object graphConfiguration;
+    private final Class<PayloadType> payloadType;
+    private final Object graphConfiguration;
 
-    public ReactorGraphBuilder(Object graphConfiguration) {
+    public ReactorGraphBuilder(Class<PayloadType> payloadType, Object graphConfiguration) {
+        this.payloadType = payloadType;
         this.graphConfiguration = graphConfiguration;
-
-        graphValidators.add(new TerminalVertexExistValidator());
-        graphValidators.add(new ProcessorsHaveIncomingFlowsValidator());
     }
-
-    /**
-     * Build ReactorGraph for given payload
-     */
-    public <PayloadType> PayloadBuilder<PayloadType> payload(Class<PayloadType> payloadClass) {
-        val builderContext = new BuilderContext<PayloadType>(graphConfiguration, new CRReactorGraph<>(payloadClass));
-        builderContext.getGraphValidators().addAll(graphValidators);
-
-        builderContext.getGraph().getStartPoint().setBuilderPayloadSource(
-                ReactorReflector.getMethodInvocationPoint().orElse(null));
-
-        return new CRPayloadBuilder<>(builderContext);
-    }
-
 
     /**
      * Build ProcessorDescription
      */
-    public ProcessorDescriptionBuilder processor() {
-        return new ProcessorDescriptionBuilder() {
-            @Override
-            public <PayloadType> ru.fix.completable.reactor.runtime.dsl.HandlerBuilder0<PayloadType> forPayload(
-                    Class<PayloadType> payloadType) {
-
-                val processorDescription = new CRProcessorDescription<PayloadType>();
-                return new CRHandlerBuilder0<>(processorDescription);
-            }
-        };
-    }
-
-    /**
-     * Build MergePointDescription
-     */
-    public MergePointDescriptionBuilder mergePoint() {
-        return new MergePointDescriptionBuilder() {
-            @Override
-            public <PayloadType> MergePointMergerBuilder<PayloadType> forPayload(Class<PayloadType> payloadType) {
-                CRMergePointDescription<PayloadType> mergePointDescription = new CRMergePointDescription<>();
-                return new CRMergePointMergerBuilder<>(mergePointDescription);
-            }
-        };
+    public HandlerBuilder0<PayloadType> processor() {
+        val processorDescription = new CRProcessorDescription<PayloadType>();
+        return new CRHandlerBuilder0<>(processorDescription);
     }
 
     /**
      * Build SubgraphDescription
      */
-    public <SubgraphPayloadType> SubgraphBuilder<SubgraphPayloadType> subgraph(
-            Class<SubgraphPayloadType> subgraphPayload) {
+    public <SubgraphPayloadType> SubgraphHandlerBuilder<SubgraphPayloadType, PayloadType> subgraph(Class<SubgraphPayloadType> subgraphPayload) {
+        CRSubgraphDescription<PayloadType> subgraphDescription = new CRSubgraphDescription<>(subgraphPayload);
+        subgraphDescription.setBuildSource(ReactorReflector.getMethodInvocationPoint().orElse(null));
 
-        return new SubgraphBuilder<SubgraphPayloadType>() {
-            @Override
-            public <PayloadType> SubgraphHandlerBuilder<SubgraphPayloadType, PayloadType> forPayload(
-                    Class<PayloadType> payloadType) {
+        subgraphDescription.setSubgraphTitle(subgraphPayload.getSimpleName());
 
-                CRSubgraphDescription<PayloadType> subgraphDescription = new CRSubgraphDescription<>(subgraphPayload);
-                subgraphDescription.setBuildSource(ReactorReflector.getMethodInvocationPoint().orElse(null));
+        Optional.ofNullable(subgraphPayload.getAnnotation(Reactored.class))
+                .map(Reactored::value)
+                .ifPresent(subgraphDescription::setSubgraphDoc);
 
-                subgraphDescription.setSubgraphTitle(subgraphPayload.getSimpleName());
+        return new CRSubgraphHandlerBuilder<>(subgraphDescription);
+    }
 
-                Optional.ofNullable(subgraphPayload.getAnnotation(Reactored.class))
-                        .map(Reactored::value)
-                        .ifPresent(subgraphDescription::setSubgraphDoc);
+    /**
+     * Build MergePointDescription
+     */
+    public MergePointMergerBuilder<PayloadType> mergePoint() {
+        CRMergePointDescription<PayloadType> mergePointDescription = new CRMergePointDescription<>();
+        return new CRMergePointMergerBuilder<>(mergePointDescription);
+    }
 
-                return new CRSubgraphHandlerBuilder<>(subgraphDescription);
-            }
-        };
+    /**
+     * Build ReactorGraph for given payload
+     */
+    public PayloadBuilder<PayloadType> payload() {
+        val builderContext = new BuilderContext<PayloadType>(graphConfiguration, new CRReactorGraph<>(payloadType));
+
+        builderContext.getGraphValidators().add(new TerminalVertexExistValidator());
+        builderContext.getGraphValidators().add(new ProcessorsHaveIncomingFlowsValidator());
+
+        builderContext.getGraph().getStartPoint().setBuilderPayloadSource(
+                ReactorReflector.getMethodInvocationPoint().orElse(null));
+
+        return new CRPayloadBuilder<>(builderContext);
     }
 
 
@@ -122,35 +97,5 @@ public class ReactorGraphBuilder {
             val path = Paths.get(((CRReactorGraph) graph).getPayloadClass().getName() + ".rg");
             Files.write(path, content.getBytes(StandardCharsets.UTF_8));
         }
-    }
-
-    public <PayloadType> TypedGraphBuilder<PayloadType> forPayload(Class<PayloadType> payloadType){
-        return new TypedGraphBuilder<PayloadType>() {
-            @Override
-            public HandlerBuilder0<PayloadType> processor() {
-                val processorDescription = new CRProcessorDescription<PayloadType>();
-                return new CRHandlerBuilder0<>(processorDescription);
-            }
-
-            @Override
-            public <SubgraphPayloadType> SubgraphHandlerBuilder<SubgraphPayloadType, PayloadType> subgraph(Class<SubgraphPayloadType> subgraphPayload) {
-                CRSubgraphDescription<PayloadType> subgraphDescription = new CRSubgraphDescription<>(subgraphPayload);
-                subgraphDescription.setBuildSource(ReactorReflector.getMethodInvocationPoint().orElse(null));
-
-                subgraphDescription.setSubgraphTitle(subgraphPayload.getSimpleName());
-
-                Optional.ofNullable(subgraphPayload.getAnnotation(Reactored.class))
-                        .map(Reactored::value)
-                        .ifPresent(subgraphDescription::setSubgraphDoc);
-
-                return new CRSubgraphHandlerBuilder<>(subgraphDescription);
-            }
-
-            @Override
-            public MergePointMergerBuilder<PayloadType> mergePoint() {
-                CRMergePointDescription<PayloadType> mergePointDescription = new CRMergePointDescription<>();
-                return new CRMergePointMergerBuilder<>(mergePointDescription);
-            }
-        };
     }
 }

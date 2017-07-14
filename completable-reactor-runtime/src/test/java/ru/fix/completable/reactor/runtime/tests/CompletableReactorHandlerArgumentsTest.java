@@ -54,10 +54,9 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .withHandler(service::foo)
                     .withMerger((payload, result) -> {
                         payload.data = result;
@@ -67,7 +66,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)
@@ -108,10 +107,10 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
+
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> 7L)
                     .withHandler(service::foo)
                     .withMerger((payload, result) -> {
@@ -122,9 +121,8 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph(){
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
-
                         .mergePoint(processor)
                         .onAny()
                         .complete()
@@ -163,9 +161,8 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> BigInteger.valueOf(6L))
                     .passArg(pld -> 7L)
                     .withHandler(service::foo)
@@ -177,7 +174,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)
@@ -220,10 +217,9 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            private ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> true)
                     .passArg(pld -> BigInteger.valueOf(6L))
                     .passArg(pld -> 7L)
@@ -236,7 +232,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)
@@ -280,10 +276,9 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> (short) 3)
                     .passArg(pld -> true)
                     .passArg(pld -> BigInteger.valueOf(6L))
@@ -297,7 +292,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)
@@ -342,10 +337,9 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> "1")
                     .passArg(pld -> (short) 3)
                     .passArg(pld -> true)
@@ -360,7 +354,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)
@@ -407,10 +401,9 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> "1")
                     .passArg(pld -> (short) 3)
                     .passArg(pld -> true)
@@ -426,7 +419,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)
@@ -474,10 +467,9 @@ public class CompletableReactorHandlerArgumentsTest {
         final Service service = new Service();
 
         class Config {
-            ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+            ReactorGraphBuilder<Payload> graphBuilder = new ReactorGraphBuilder<>(Payload.class,this);
 
             Processor<Payload> processor = graphBuilder.processor()
-                    .forPayload(Payload.class)
                     .passArg(pld -> "1")
                     .passArg(pld -> 2)
                     .passArg(pld -> (short) 3)
@@ -494,7 +486,7 @@ public class CompletableReactorHandlerArgumentsTest {
 
 
             ReactorGraph<Payload> graph() {
-                return graphBuilder.payload(Payload.class)
+                return graphBuilder.payload()
                         .handle(processor)
 
                         .mergePoint(processor)

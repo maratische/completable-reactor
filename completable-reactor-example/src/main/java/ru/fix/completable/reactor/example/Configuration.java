@@ -19,7 +19,17 @@ import java.math.BigDecimal;
  */
 public class Configuration {
 
-    final ReactorGraphBuilder graphBuilder = new ReactorGraphBuilder(this);
+    ReactorGraphBuilder<PurchasePayload> purchaseBuilder = new ReactorGraphBuilder<>(
+            PurchasePayload.class,
+            this);
+
+    ReactorGraphBuilder<SubscribePayload> subscribeBuilder = new ReactorGraphBuilder<>(
+            SubscribePayload.class,
+            this);
+
+    ReactorGraphBuilder<UserProfilePayloadMixin> userProfileMixinBuilder = new ReactorGraphBuilder<>(
+            UserProfilePayloadMixin.class,
+            this);
 
     /**
      * Services
@@ -36,8 +46,7 @@ public class Configuration {
      * Graph processors
      */
     ProcessorDescription<UserProfilePayloadMixin> gUserProfileDescription =
-            graphBuilder.processor()
-                    .forPayload(UserProfilePayloadMixin.class)
+            userProfileMixinBuilder.processor()
                     .passArg(pld -> pld.getUserId())
                     .passArg(pld -> pld.getUserId().toString())
                     .withHandler(userProfile::loadUserProfileById)
@@ -64,16 +73,14 @@ public class Configuration {
     Processor<UserProfilePayloadMixin> gUserProfile = gUserProfileDescription.buildProcessor();
 
 
-    Processor<UserProfilePayloadMixin> gTxLog = graphBuilder.processor()
-            .forPayload(UserProfilePayloadMixin.class)
+    Processor<UserProfilePayloadMixin> gTxLog = userProfileMixinBuilder.processor()
             .passArg(pld -> pld.getUserId())
             .withHandler(txLog::logTransactioin)
             .withMerger((pld, any) -> MergeStatus.CONTINUE)
             .buildProcessor();
 
 
-    Processor<UserProfilePayloadMixin> gUserLog = graphBuilder.processor()
-            .forPayload(UserProfilePayloadMixin.class)
+    Processor<UserProfilePayloadMixin> gUserLog = userProfileMixinBuilder.processor()
             .passArg(pld -> pld.getUserId())
             .passArg(pld -> String.format("Request type: %s", pld.getClass().getSimpleName()))
             .withHandler(userLog::logAction)
@@ -81,8 +88,7 @@ public class Configuration {
             .buildProcessor();
 
 
-    Processor<UserProfilePayloadMixin> gNotification = graphBuilder.processor()
-            .forPayload(UserProfilePayloadMixin.class)
+    Processor<UserProfilePayloadMixin> gNotification = userProfileMixinBuilder.processor()
             .copyArg(pld -> pld.getUserId())
             .withHandler(notification1::sendPurchaseNotification)
             .withoutMerger()
@@ -111,16 +117,14 @@ public class Configuration {
         }
     }
 
-    Processor<PurchasePayload> gBankPurchase = graphBuilder.processor()
-            .forPayload(PurchasePayload.class)
+    Processor<PurchasePayload> gBankPurchase = purchaseBuilder.processor()
             .passArg(pld -> pld.intermediateData.getUserInfo())
             .passArg(pld -> pld.intermediateData.getServiceInfo())
             .withHandler(bank::withdrawMoneyWithMinus)
             .withMerger(Configuration::checkWithdrawResult)
             .buildProcessor();
 
-    Processor<SubscribePayload> gBankSubsribe = graphBuilder.processor()
-            .forPayload(SubscribePayload.class)
+    Processor<SubscribePayload> gBankSubsribe = subscribeBuilder.processor()
             .passArg(pld -> pld.intermediateData.getUserInfo())
             .passArg(pld -> pld.intermediateData.getServiceInfo())
             .withHandler(bank::withdrawMoney)
@@ -144,8 +148,10 @@ public class Configuration {
             .buildProcessor();
 
 
-    Processor<ServiceInfoPayloadMixin> gPurchaseServiceInfo = graphBuilder.processor()
-            .forPayload(ServiceInfoPayloadMixin.class)
+    Processor<ServiceInfoPayloadMixin> gPurchaseServiceInfo = new ReactorGraphBuilder<>(
+            ServiceInfoPayloadMixin.class,
+            this)
+            .processor()
             .passArg(pld -> pld.getServiceId())
             .withHandler(serviceInfo::loadServiceInformation)
             .withMerger(
@@ -174,7 +180,7 @@ public class Configuration {
 
     public ReactorGraph<PurchasePayload> purchaseGraph() throws Exception {
 
-        return graphBuilder.payload(PurchasePayload.class)
+        return purchaseBuilder.payload()
                 .handle(gUserProfile)
                 .handle(gPurchaseServiceInfo)
 
@@ -221,8 +227,10 @@ public class Configuration {
                 .buildGraph();
     }
 
-    Processor<ServiceInfoPayloadMixin> gSubscribeServiceInfo = graphBuilder.processor()
-            .forPayload(ServiceInfoPayloadMixin.class)
+    Processor<ServiceInfoPayloadMixin> gSubscribeServiceInfo = new ReactorGraphBuilder<>(
+            ServiceInfoPayloadMixin.class,
+            this)
+            .processor()
             .passArg(pld -> pld.getServiceId())
             .withHandler(serviceInfo::loadServiceInformation)
             .withMerger(
@@ -248,8 +256,7 @@ public class Configuration {
                         return MergeStatus.CONTINUE;
                     }).buildProcessor();
 
-    MergePoint<SubscribePayload> trialPeriodCheck = graphBuilder.mergePoint()
-            .forPayload(SubscribePayload.class)
+    MergePoint<SubscribePayload> trialPeriodCheck = subscribeBuilder.mergePoint()
             .withMerger(
                     "checkTrialPeriod",
                     new String[]{"Checks whether service supports trial period"},
@@ -263,8 +270,8 @@ public class Configuration {
             .buildMergePoint();
 
     public ReactorGraph<SubscribePayload> subscribeGraph() throws Exception {
-        return graphBuilder
-                .payload(SubscribePayload.class)
+        return subscribeBuilder
+                .payload()
                 .handle(gUserProfile)
                 .handle(gSubscribeServiceInfo)
 
