@@ -123,4 +123,34 @@ public class ReactorGraphBuilder {
             Files.write(path, content.getBytes(StandardCharsets.UTF_8));
         }
     }
+
+    public <PayloadType> TypedGraphBuilder<PayloadType> forPayload(Class<PayloadType> payloadType){
+        return new TypedGraphBuilder<PayloadType>() {
+            @Override
+            public HandlerBuilder0<PayloadType> processor() {
+                val processorDescription = new CRProcessorDescription<PayloadType>();
+                return new CRHandlerBuilder0<>(processorDescription);
+            }
+
+            @Override
+            public <SubgraphPayloadType> SubgraphHandlerBuilder<SubgraphPayloadType, PayloadType> subgraph(Class<SubgraphPayloadType> subgraphPayload) {
+                CRSubgraphDescription<PayloadType> subgraphDescription = new CRSubgraphDescription<>(subgraphPayload);
+                subgraphDescription.setBuildSource(ReactorReflector.getMethodInvocationPoint().orElse(null));
+
+                subgraphDescription.setSubgraphTitle(subgraphPayload.getSimpleName());
+
+                Optional.ofNullable(subgraphPayload.getAnnotation(Reactored.class))
+                        .map(Reactored::value)
+                        .ifPresent(subgraphDescription::setSubgraphDoc);
+
+                return new CRSubgraphHandlerBuilder<>(subgraphDescription);
+            }
+
+            @Override
+            public MergePointMergerBuilder<PayloadType> mergePoint() {
+                CRMergePointDescription<PayloadType> mergePointDescription = new CRMergePointDescription<>();
+                return new CRMergePointMergerBuilder<>(mergePointDescription);
+            }
+        };
+    }
 }
