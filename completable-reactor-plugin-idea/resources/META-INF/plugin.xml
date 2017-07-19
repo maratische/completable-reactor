@@ -37,7 +37,7 @@
   </extensions>
 
   <actions>
-    <action id="reactorGraphAction" class="ru.fix.completable.reactor.plugin.idea.ReactorGraphAction"
+    <action id="reactorGraphAction" class="ru.fix.completable.reactor.plugin.idea.ShowGraphViewerAction"
             text="Reactor Graph">
       <keyboard-shortcut first-keystroke="control alt R" keymap="$default"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
