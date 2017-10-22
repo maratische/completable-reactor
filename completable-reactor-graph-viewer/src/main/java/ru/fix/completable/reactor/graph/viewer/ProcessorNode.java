@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * Created by swarmshine on 29.01.2017.
  */
-class ProcessorNode extends VBox {
+public class ProcessorNode extends VBox {
 
     final CoordinateTranslator coordinateTranslator;
     final ReactorGraphModel.Processor processor;

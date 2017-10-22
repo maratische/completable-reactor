@@ -8,6 +8,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import lombok.val;
 import ru.fix.completable.reactor.api.ReactorGraphModel;
+import ru.fix.completable.reactor.graph.organize.OrganizeNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,6 +117,10 @@ public class GraphViewPane extends ScrollPane {
 
         serializationMenuItem.setOnAction(event -> actionListener.goToSource(this.graphModel.serializationPointSource));
         contextMenu.getItems().add(serializationMenuItem);
+
+        MenuItem organizeNodesGraphMenuItem = new MenuItem("Organize Nodes");
+        organizeNodesGraphMenuItem.setOnAction(event -> OrganizeNode.organize(pane.getChildren(), coordinateItems, actionListener));
+        contextMenu.getItems().add(organizeNodesGraphMenuItem);
 
         pane.setOnContextMenuRequested(contextMenuEvent -> {
 
