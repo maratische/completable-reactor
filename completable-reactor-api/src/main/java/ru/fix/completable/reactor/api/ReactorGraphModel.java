@@ -51,7 +51,7 @@ public class ReactorGraphModel {
 
     @Data
     @Accessors(chain = true)
-    public static class MergePoint {
+    public static class MergePoint implements Point {
         public Identity identity;
 
         public Coordinates coordinates;
@@ -160,7 +160,7 @@ public class ReactorGraphModel {
 
     @Data
     @Accessors(chain = true)
-    public static class Processor {
+    public static class Processor implements Point {
         Identity identity;
 
         public Coordinates coordinates;
@@ -175,7 +175,7 @@ public class ReactorGraphModel {
 
     @Data
     @Accessors(chain = true)
-    public static class Subgraph {
+    public static class Subgraph implements Point {
         Identity identity;
 
         public Coordinates coordinates;
@@ -185,6 +185,12 @@ public class ReactorGraphModel {
 
         public String subgraphTitle;
         public String[] subgraphDoc;
+    }
+
+    public interface Point {
+        Identity getIdentity();
+
+        Coordinates getCoordinates();
     }
 
     public enum Version {

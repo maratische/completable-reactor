@@ -119,7 +119,7 @@ public class GraphViewPane extends ScrollPane {
         contextMenu.getItems().add(serializationMenuItem);
 
         MenuItem organizeNodesGraphMenuItem = new MenuItem("Organize Nodes");
-        organizeNodesGraphMenuItem.setOnAction(event -> OrganizeNode.organize(pane.getChildren(), coordinateItems, actionListener));
+        organizeNodesGraphMenuItem.setOnAction(event -> new OrganizeNode().organize(this.graphModel));
         contextMenu.getItems().add(organizeNodesGraphMenuItem);
 
         pane.setOnContextMenuRequested(contextMenuEvent -> {
