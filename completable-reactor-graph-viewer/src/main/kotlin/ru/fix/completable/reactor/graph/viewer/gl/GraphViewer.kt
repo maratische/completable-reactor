@@ -4,8 +4,12 @@ import javafx.scene.Scene
 import javafx.scene.control.Tab
 import javafx.scene.control.TabPane
 import javafx.scene.layout.Pane
-import ru.fix.completable.reactor.model.GraphModel
-import ru.fix.completable.reactor.model.Source
+import jdk.internal.org.objectweb.asm.Handle
+import ru.fix.completable.reactor.api.ReactorGraphModel
+import ru.fix.completable.reactor.graph.viewer.gl.code.CoordinateCodePhrase
+import ru.fix.completable.reactor.graph.viewer.model.TreeNode
+import ru.fix.completable.reactor.model.*
+import java.util.ArrayList
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -45,6 +49,70 @@ class GraphViewer {
         scene.stylesheets.add(javaClass.getResource("/css/styles.css").toExternalForm())
     }
 
+    /**
+     * fix default coordinates on nodes in graph
+     *
+     * @param graph
+     */
+    fun fixCoordinates(graph: GraphModel) {
+        val treeNode = TreeNode(graph.startPoint as Figure)
+        if (graph.startPoint != null && graph.startPoint.handleBy != null) {
+            for (handle in graph.startPoint.handleBy) {
+                if (handle is VertexFigure) {
+                    recursiveBuldTree(graph, treeNode, handle)
+                }
+            }
+        }
+        recursiveFixCoordinates(treeNode,
+                graph.startPoint.coordinates!!.x, graph.startPoint.coordinates!!.y, 200, 100)
+    }
+
+    private fun recursiveBuldTree(graph: GraphModel, parentNode: TreeNode<Figure>, handler: VertexFigure) {
+        val node = parentNode.addChild(handler)
+        if (handler is TransitionableFigure) {
+            processTransition(handler.transitions, graph, node, parentNode)
+        } else {
+            val merger = graph.mergers.get(handler.name)
+            if (merger != null) {
+                processTransition(merger.transitions, graph, node, parentNode)
+            }
+        }
+    }
+
+    private fun processTransition(transitions: MutableList<Transition>, graph: GraphModel, node: TreeNode<Figure>, parentNode: TreeNode<Figure>) {
+        if (transitions != null) {
+            for (transition in transitions) {
+                if (transition.target != null) {
+                    when (transition.target) {
+                        is VertexFigure -> {
+                            recursiveBuldTree(graph, node, transition.target as VertexFigure)
+                        }
+                        is EndPoint -> {
+                            parentNode.addChild(transition.target)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    internal var DEFAULT_POSITION = 100
+
+    private fun recursiveFixCoordinates(parentNode: TreeNode<Figure>, parentX: Int, parentY: Int, deltaX: Int, deltaY: Int) {
+        var index = -1 * (parentNode.childs().size / 2)
+        for (`object` in parentNode.childs()) {
+            val node = `object`
+            if (node.data is Figure) {
+                if (node.data.coordinates == null) {
+                    node.data.coordinates = Coordinates(deltaX * index++ + parentX, deltaY + parentY)
+                }
+                recursiveFixCoordinates(node, node.data.coordinates!!.x, node.data.coordinates!!.y, deltaX, deltaY)
+            } else {
+                node.data
+            }
+        }
+    }
+
     fun openGraph(graphs: List<GraphModel>) {
         if (graphs.isEmpty()) {
             return
@@ -57,6 +125,7 @@ class GraphViewer {
 
             scene.root = graphViewPane
 
+            fixCoordinates(graphs[0]);
             graphViewPane.openGraph(graphs[0])
 
             //Shortcuts
