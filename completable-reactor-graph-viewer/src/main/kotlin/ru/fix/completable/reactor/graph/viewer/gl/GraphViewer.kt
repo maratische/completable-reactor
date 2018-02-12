@@ -74,7 +74,8 @@ class GraphViewer {
         } else {
             val merger = graph.mergers.get(handler.name)
             if (merger != null) {
-                processTransition(merger.transitions, graph, node, parentNode)
+                val mergerNode = node.addChild(merger)
+                processTransition(merger.transitions, graph, mergerNode, parentNode)
             }
         }
     }
@@ -150,6 +151,7 @@ class GraphViewer {
                 }
                 tabPane.tabs.add(tab)
 
+                fixCoordinates(graph);
                 graphViewPane.openGraph(graph)
 
                 addShortcutListener(graphViewPane)
